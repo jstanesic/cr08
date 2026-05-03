@@ -3,41 +3,37 @@
   gather_facts: false
   vars:
     ad_domain_name: globalfinancial.local
-    ad_admin_password: 'ChangeMe!'
+    ad_admin_password: ChangeMe!
   tasks:
     - name: Ensure AD DS Windows feature is installed
+      register: ad_feature
       ansible.windows.win_feature:
         name: AD-Domain-Services
         include_management_tools: true
         state: present
-      register: ad_feature
-
     - name: Promote host to domain controller
+      when: ad_feature is succeeded
       microsoft.ad.domain:
         dns_domain_name: '{{ ad_domain_name }}'
         safe_mode_password: '{{ ad_admin_password }}'
         reboot: true
-      when: ad_feature is succeeded
-
     - name: Wait for AD DS to come up after the post-promotion reboot
       ansible.windows.win_wait_for:
         host: 127.0.0.1
         port: 389
         delay: 30
         timeout: 600
-
     - name: Ensure default OU for trainees exists
       microsoft.ad.ou:
         name: Trainees
-        path: 'DC={{ ad_domain_name.split(".") | join(",DC=") }}'
+        path: DC={{ ad_domain_name.split(".") | join(",DC=") }}
         state: present
-
 - name: Active Directory — join Windows member servers to the domain
   hosts: windows-cluster
   gather_facts: false
   vars:
     ad_domain_name: globalfinancial.local
-    ad_admin_password: 'ChangeMe!'
+    ad_admin_password: ChangeMe!
     ad_dc_ip: 10.10.10.3
   tasks:
     - name: Point DNS at the domain controller on all adapters
@@ -45,15 +41,13 @@
         adapter_names: '*'
         dns_servers:
           - '{{ ad_dc_ip }}'
-
     - name: Join host to the AD domain
       microsoft.ad.membership:
         dns_domain_name: '{{ ad_domain_name }}'
-        domain_admin_user: 'Administrator@{{ ad_domain_name }}'
+        domain_admin_user: Administrator@{{ ad_domain_name }}
         domain_admin_password: '{{ ad_admin_password }}'
         state: domain
         reboot: true
-
 - name: Shared storage — LIO iSCSI block target on the additional disk
   hosts: storage-nodes
   become: true
@@ -65,14 +59,15 @@
       ansible.builtin.package:
         name: targetcli-fb
         state: present
-
     - name: Ensure the LIO target service is enabled and running
       ansible.builtin.service:
         name: rtslib-fb-targetctl
         enabled: true
         state: started
-
     - name: Detect the additional whole disk to use as the iSCSI backing device
+      failed_when: (iscsi_backing_disk.stdout | trim | length) == 0
+      changed_when: 'false'
+      register: iscsi_backing_disk
       ansible.builtin.shell:
         cmd: |
           set -euo pipefail
@@ -82,49 +77,41 @@
             | awk -v root="/dev/$root_pk" '$2=="disk" && $1!=root {print $1}' \
             | head -n1
         executable: /bin/bash
-      register: iscsi_backing_disk
-      changed_when: false
-      failed_when: (iscsi_backing_disk.stdout | trim | length) == 0
-
     - name: Create block storage object on the additional disk
-      ansible.builtin.command: >-
-        targetcli /backstores/block create
-        name={{ iscsi_block_name }}
-        dev={{ iscsi_backing_disk.stdout | trim }}
-      register: iscsi_bs
+      failed_when: >-
+        iscsi_bs.rc != 0,'exists' not in (iscsi_bs.stderr | default('')) +
+        (iscsi_bs.stdout | default(''))
       changed_when: iscsi_bs.rc == 0
-      failed_when:
-        - iscsi_bs.rc != 0
-        - "'exists' not in (iscsi_bs.stderr | default('')) + (iscsi_bs.stdout | default(''))"
       notify: Save targetcli configuration
-
+      register: iscsi_bs
+      ansible.builtin.command: >-
+        targetcli /backstores/block create name={{ iscsi_block_name }} dev={{
+        iscsi_backing_disk.stdout | trim }}
     - name: Create iSCSI target
-      ansible.builtin.command: "targetcli /iscsi create {{ iscsi_target_iqn }}"
-      register: iscsi_tgt
+      failed_when: >-
+        iscsi_tgt.rc != 0,'exists' not in (iscsi_tgt.stderr | default('')) +
+        (iscsi_tgt.stdout | default(''))
       changed_when: iscsi_tgt.rc == 0
-      failed_when:
-        - iscsi_tgt.rc != 0
-        - "'exists' not in (iscsi_tgt.stderr | default('')) + (iscsi_tgt.stdout | default(''))"
       notify: Save targetcli configuration
-
+      register: iscsi_tgt
+      ansible.builtin.command: targetcli /iscsi create {{ iscsi_target_iqn }}
     - name: Map LUN 0 to the block storage object
+      failed_when: >-
+        iscsi_lun.rc != 0,'exists' not in (iscsi_lun.stderr | default('')) +
+        (iscsi_lun.stdout | default(''))
+      changed_when: iscsi_lun.rc == 0
+      notify: Save targetcli configuration
+      register: iscsi_lun
       ansible.builtin.command: >-
         targetcli /iscsi/{{ iscsi_target_iqn }}/tpg1/luns create
         /backstores/block/{{ iscsi_block_name }} 0
-      register: iscsi_lun
-      changed_when: iscsi_lun.rc == 0
-      failed_when:
-        - iscsi_lun.rc != 0
-        - "'exists' not in (iscsi_lun.stderr | default('')) + (iscsi_lun.stdout | default(''))"
-      notify: Save targetcli configuration
-
     - name: Allow anonymous access on TPG 1
-      ansible.builtin.command: >-
-        targetcli /iscsi/{{ iscsi_target_iqn }}/tpg1
-        set attribute authentication=0 generate_node_acls=1 demo_mode_write_protect=0
-      register: iscsi_tpg
-      changed_when: "'is now' in (iscsi_tpg.stdout | default(''))"
+      changed_when: '''is now'' in (iscsi_tpg.stdout | default(''''))'
       notify: Save targetcli configuration
+      register: iscsi_tpg
+      ansible.builtin.command: >-
+        targetcli /iscsi/{{ iscsi_target_iqn }}/tpg1 set attribute
+        authentication=0 generate_node_acls=1 demo_mode_write_protect=0
   handlers:
     - name: Save targetcli configuration
       ansible.builtin.command: targetcli saveconfig

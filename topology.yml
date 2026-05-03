@@ -5,26 +5,26 @@ hosts:
     base_box:
       image: windows-server-2019-x86_64
       mgmt_user: Administrator
-      mgmt_protocol: winrm
+      mgmt_protocol: wirm
     hidden: false
   - name: srv01
     flavor: c4_r8_d60
     base_box:
       image: windows-server-2019-x86_64
       mgmt_user: Administrator
-      mgmt_protocol: winrm
+      mgmt_protocol: wirm
     hidden: false
     volumes:
-      - size: 10
+      - '10'
   - name: srv02
     flavor: c4_r8_d60
     base_box:
       image: windows-server-2019-x86_64
       mgmt_user: Administrator
-      mgmt_protocol: winrm
+      mgmt_protocol: wirm
     hidden: false
     volumes:
-      - size: 10
+      - '10'
   - name: lin1
     flavor: c4_r8_d60
     base_box:
@@ -47,7 +47,7 @@ hosts:
       mgmt_protocol: ssh
     hidden: false
     volumes:
-      - size: 10
+      - '10'
   - name: lin4
     flavor: c2_r4_d40
     base_box:
@@ -70,11 +70,11 @@ networks:
     hidden: false
   - name: cluster-switch
     cidr: 10.10.20.0/24
-    accessible_by_user: false
+    accessible_by_user: true
     hidden: false
   - name: storage-switch
     cidr: 10.10.30.0/24
-    accessible_by_user: false
+    accessible_by_user: true
     hidden: false
 wan:
   name: wan
@@ -171,4 +171,3 @@ groups:
       - lin2
       - lin3
       - lin4
-monitoring_targets:
