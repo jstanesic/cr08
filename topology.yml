@@ -56,7 +56,21 @@ hosts:
       mgmt_protocol: ssh
     hidden: false
 routers:
-  - name: router
+  - name: r-access
+    flavor: standard.small
+    base_box:
+      image: debian-12-x86_64
+      mgmt_user: debian
+      mgmt_protocol: ssh
+    hidden: true
+  - name: r-cluster
+    flavor: standard.small
+    base_box:
+      image: debian-12-x86_64
+      mgmt_user: debian
+      mgmt_protocol: ssh
+    hidden: true
+  - name: r-storage
     flavor: standard.small
     base_box:
       image: debian-12-x86_64
@@ -70,11 +84,11 @@ networks:
     hidden: false
   - name: cluster
     cidr: 10.10.20.0/24
-    accessible_by_user: true
+    accessible_by_user: false
     hidden: false
   - name: storage
     cidr: 10.10.30.0/24
-    accessible_by_user: true
+    accessible_by_user: false
     hidden: false
 wan:
   name: wan
@@ -129,13 +143,13 @@ net_mappings:
     network: access
     ip: 10.10.10.9
 router_mappings:
-  - router: router
+  - router: r-access
     network: access
     ip: 10.10.10.1
-  - router: router
+  - router: r-cluster
     network: cluster
     ip: 10.10.20.1
-  - router: router
+  - router: r-storage
     network: storage
     ip: 10.10.30.1
 groups:
