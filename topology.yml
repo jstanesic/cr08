@@ -1,15 +1,15 @@
 name: cr08
 
 hosts:
-  - name: server
+  - name: dc01
     base_box:
-      image: ubuntu-noble-x86_64
-      man_user: ubuntu
+      image: windows-server-2019-x86_64
+      man_user: Administrator
     flavor: standard.small
 
   - name: client
     base_box:
-      image: ubuntu-noble-x86_64
+      image: windows-server-2019-x86_64
       man_user: ubuntu
     flavor: standard.small
 
