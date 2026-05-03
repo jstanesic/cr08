@@ -78,79 +78,79 @@ routers:
       mgmt_protocol: ssh
     hidden: true
 networks:
-  - name: access
+  - name: access-switch
     cidr: 10.10.10.0/24
     accessible_by_user: true
     hidden: false
-  - name: cluster
+  - name: cluster-switch
     cidr: 10.10.20.0/24
-    accessible_by_user: false
+    accessible_by_user: true
     hidden: false
-  - name: storage
+  - name: storage-switch
     cidr: 10.10.30.0/24
-    accessible_by_user: false
+    accessible_by_user: true
     hidden: false
 wan:
   name: wan
   cidr: 10.10.100.0/24
 net_mappings:
   - host: dc01
-    network: access
+    network: access-switch
     ip: 10.10.10.3
   - host: srv01
-    network: access
+    network: access-switch
     ip: 10.10.10.4
   - host: srv01
-    network: cluster
+    network: cluster-switch
     ip: 10.10.20.4
   - host: srv01
-    network: storage
+    network: storage-switch
     ip: 10.10.30.4
   - host: srv02
-    network: access
+    network: access-switch
     ip: 10.10.10.5
   - host: srv02
-    network: cluster
+    network: cluster-switch
     ip: 10.10.20.5
   - host: srv02
-    network: storage
+    network: storage-switch
     ip: 10.10.30.5
   - host: lin1
-    network: access
+    network: access-switch
     ip: 10.10.10.6
   - host: lin1
-    network: cluster
+    network: cluster-switch
     ip: 10.10.20.6
   - host: lin1
-    network: storage
+    network: storage-switch
     ip: 10.10.30.6
   - host: lin2
-    network: access
+    network: access-switch
     ip: 10.10.10.7
   - host: lin2
-    network: cluster
+    network: cluster-switch
     ip: 10.10.20.7
   - host: lin2
-    network: storage
+    network: storage-switch
     ip: 10.10.30.7
   - host: lin3
-    network: access
+    network: access-switch
     ip: 10.10.10.8
   - host: lin3
-    network: storage
+    network: storage-switch
     ip: 10.10.30.3
   - host: lin4
     network: access
-    ip: 10.10.10.9
+    ip: 10.10.10.9-switch
 router_mappings:
   - router: r-access
-    network: access
+    network: access-switch
     ip: 10.10.10.1
   - router: r-cluster
-    network: cluster
+    network: cluster-switch
     ip: 10.10.20.1
   - router: r-storage
-    network: storage
+    network: storage-switch
     ip: 10.10.30.1
 groups:
   - name: domain-controllers
