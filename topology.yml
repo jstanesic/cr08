@@ -2,10 +2,12 @@ name: cr08
 
 hosts:
   - name: dc01
+    flavor: c2_r4_d40
     base_box:
       image: windows-server-2019-x86_64
-      man_user: Administrator
-    flavor: standard.small
+      mgmt_user: Administrator
+      mgmt_protocol: winrm
+    hidden: false
 
   - name: client
     base_box:
