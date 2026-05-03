@@ -14,8 +14,6 @@ hosts:
       mgmt_user: Administrator
       mgmt_protocol: wirm
     hidden: false
-    volumes:
-      - '10'
   - name: srv02
     flavor: c4_r8_d60
     base_box:
@@ -23,8 +21,6 @@ hosts:
       mgmt_user: Administrator
       mgmt_protocol: wirm
     hidden: false
-    volumes:
-      - '10'
   - name: lin1
     flavor: c4_r8_d60
     base_box:
@@ -46,8 +42,6 @@ hosts:
       mgmt_user: debian
       mgmt_protocol: ssh
     hidden: false
-    volumes:
-      - '10'
   - name: lin4
     flavor: c2_r4_d40
     base_box:
