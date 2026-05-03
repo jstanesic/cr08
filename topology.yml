@@ -68,9 +68,7 @@ networks:
     cidr: 192.168.10.0/24
     accessible_by_user: true
     hidden: false
-wan:
-  name: wan
-  cidr: 192.168.100.0/24
+
 net_mappings:
   - host: dc01
     network: access-switch
