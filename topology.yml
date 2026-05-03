@@ -68,14 +68,6 @@ networks:
     cidr: 192.168.10.0/24
     accessible_by_user: true
     hidden: false
-  - name: cluster-switch
-    cidr: 192.168.20.0/24
-    accessible_by_user: true
-    hidden: false
-  - name: storage-switch
-    cidr: 192.168.30.0/24
-    accessible_by_user: true
-    hidden: false
 wan:
   name: wan
   cidr: 192.168.100.0/24
@@ -86,45 +78,18 @@ net_mappings:
   - host: srv01
     network: access-switch
     ip: 192.168.10.4
-  - host: srv01
-    network: cluster-switch
-    ip: 192.168.20.4
-  - host: srv01
-    network: storage-switch
-    ip: 192.168.30.4
   - host: srv02
     network: access-switch
     ip: 192.168.10.5
-  - host: srv02
-    network: cluster-switch
-    ip: 192.168.20.5
-  - host: srv02
-    network: storage-switch
-    ip: 192.168.30.5
   - host: lin1
     network: access-switch
     ip: 192.168.10.6
-  - host: lin1
-    network: cluster-switch
-    ip: 192.168.20.6
-  - host: lin1
-    network: storage-switch
-    ip: 192.168.30.6
   - host: lin2
     network: access-switch
     ip: 192.168.10.7
-  - host: lin2
-    network: cluster-switch
-    ip: 192.168.20.7
-  - host: lin2
-    network: storage-switch
-    ip: 192.168.30.7
   - host: lin3
     network: access-switch
     ip: 192.168.10.8
-  - host: lin3
-    network: storage-switch
-    ip: 192.168.30.3
   - host: lin4
     network: access-switch
     ip: 192.168.10.9
@@ -132,42 +97,4 @@ router_mappings:
   - router: router
     network: access-switch
     ip: 192.168.10.1
-  - router: router
-    network: cluster-switch
-    ip: 192.168.20.1
-  - router: router
-    network: storage-switch
-    ip: 192.168.30.1
-groups:
-  - name: domain-controllers
-    nodes:
-      - dc01
-  - name: windows-cluster
-    nodes:
-      - srv01
-      - srv02
-  - name: linux-ha
-    nodes:
-      - lin1
-      - lin2
-  - name: storage-nodes
-    nodes:
-      - lin3
-  - name: monitoring
-    nodes:
-      - lin4
-  - name: monitor-os
-    nodes:
-      - lin1
-      - lin2
-      - lin3
-      - lin4
-  - name: monitor-icmp
-    nodes:
-      - dc01
-      - srv01
-      - srv02
-      - lin1
-      - lin2
-      - lin3
-      - lin4
+groups: []
