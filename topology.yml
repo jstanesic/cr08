@@ -62,7 +62,7 @@ routers:
       image: debian-12-x86_64
       mgmt_user: debian
       mgmt_protocol: ssh
-    hidden: true
+    hidden: false
 networks:
   - name: access-switch
     cidr: 10.10.10.0/24
