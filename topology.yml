@@ -1,92 +1,47 @@
-name: cr08
+name: library-demo-training
+
 hosts:
-  - name: dc01
-    flavor: c2_r4_d40
+  - name: server
     base_box:
-      image: windows-server-2019-x86_64
-      mgmt_user: Administrator
-      mgmt_protocol: winrm
-    hidden: false
-  - name: srv01
-    flavor: c4_r8_d60
+      image: ubuntu-noble-x86_64
+      man_user: ubuntu
+    flavor: standard.small
+
+  - name: client
     base_box:
-      image: windows-server-2019-x86_64
-      mgmt_user: Administrator
-      mgmt_protocol: winrm
-    hidden: false
-  - name: srv02
-    flavor: c4_r8_d60
-    base_box:
-      image: windows-server-2019-x86_64
-      mgmt_user: Administrator
-      mgmt_protocol: winrm
-    hidden: false
-  - name: lin1
-    flavor: c4_r8_d60
-    base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: false
-  - name: lin2
-    flavor: c4_r8_d60
-    base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: false
-  - name: lin3
-    flavor: c4_r8_d60
-    base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: false
-  - name: lin4
-    flavor: c2_r4_d40
-    base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: false
+      image: ubuntu-noble-x86_64
+      man_user: ubuntu
+    flavor: standard.small
+
 routers:
   - name: router
-    flavor: standard.small
     base_box:
       image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: false
+      man_user: debian
+    flavor: standard.small
+
 networks:
-  - name: access-switch
-    cidr: 192.168.10.0/24
-    accessible_by_user: true
-    hidden: false
+  - name: server-switch
+    cidr: 192.168.20.0/24
+    accessible_by_user: False
+
+  - name: client-switch
+    cidr: 192.168.30.0/24
 
 net_mappings:
-  - host: dc01
-    network: access-switch
-    ip: 192.168.10.3
-  - host: srv01
-    network: access-switch
-    ip: 192.168.10.4
-  - host: srv02
-    network: access-switch
-    ip: 192.168.10.5
-  - host: lin1
-    network: access-switch
-    ip: 192.168.10.6
-  - host: lin2
-    network: access-switch
-    ip: 192.168.10.7
-  - host: lin3
-    network: access-switch
-    ip: 192.168.10.8
-  - host: lin4
-    network: access-switch
-    ip: 192.168.10.9
+  - host: server
+    network: server-switch
+    ip: 192.168.20.5
+  - host: client
+    network: client-switch
+    ip: 192.168.30.5
+
 router_mappings:
   - router: router
-    network: access-switch
-    ip: 192.168.10.1
+    network: server-switch
+    ip: 192.168.20.1
+  - router: router
+    network: client-switch
+    ip: 192.168.30.1
+
 groups: []
