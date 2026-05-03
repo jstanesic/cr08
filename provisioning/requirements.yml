@@ -1,0 +1,8 @@
+---
+collections:
+  - name: ansible.windows
+    source: https://galaxy.ansible.com
+  - name: microsoft.ad
+    source: https://galaxy.ansible.com
+
+roles: []
