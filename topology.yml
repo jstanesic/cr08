@@ -70,11 +70,11 @@ networks:
     hidden: false
   - name: cluster-switch
     cidr: 10.10.20.0/24
-    accessible_by_user: true
+    accessible_by_user: false
     hidden: false
   - name: storage-switch
     cidr: 10.10.30.0/24
-    accessible_by_user: true
+    accessible_by_user: false
     hidden: false
 wan:
   name: wan
