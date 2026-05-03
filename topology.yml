@@ -1,4 +1,4 @@
-name: library-demo-training
+name: cr08
 
 hosts:
   - name: server
