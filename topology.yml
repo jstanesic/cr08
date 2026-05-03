@@ -29,7 +29,7 @@ networks:
     cidr: 192.168.30.0/24
 
 net_mappings:
-  - host: server
+  - host: dc01
     network: server-switch
     ip: 192.168.20.5
   - host: client
