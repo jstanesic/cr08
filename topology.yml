@@ -5,14 +5,14 @@ hosts:
     base_box:
       image: windows-server-2019-x86_64
       mgmt_user: windows
-      mgmt_protocol: wirm
+      mgmt_protocol: winrm
     hidden: false
   - name: srv01
     flavor: standard.medium
     base_box:
       image: windows-server-2019-x86_64
       mgmt_user: windows
-      mgmt_protocol: wirm
+      mgmt_protocol: winrm
     hidden: false
     volumes:
       - '10'
@@ -21,7 +21,7 @@ hosts:
     base_box:
       image: windows-server-2019-x86_64
       mgmt_user: windows
-      mgmt_protocol: wirm
+      mgmt_protocol: winrm
     hidden: false
     volumes:
       - '10'
