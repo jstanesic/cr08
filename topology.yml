@@ -4,28 +4,27 @@ hosts:
     flavor: standard.medium
     base_box:
       image: windows-server-2019-x86_64
-      mgmt_user: Administrator
-      mgmt_protocol: winrm
+      mgmt_user: windows
+      mgmt_protocol: wirm
     hidden: false
-    
   - name: srv01
     flavor: standard.medium
     base_box:
       image: windows-server-2019-x86_64
-      mgmt_user: Administrator
-      mgmt_protocol: winrm
+      mgmt_user: windows
+      mgmt_protocol: wirm
     hidden: false
     volumes:
-      - size: 10
+      - '10'
   - name: srv02
     flavor: standard.medium
     base_box:
       image: windows-server-2019-x86_64
-      mgmt_user: Administrator
-      mgmt_protocol: winrm
+      mgmt_user: windows
+      mgmt_protocol: wirm
     hidden: false
     volumes:
-      - size: 10
+      - '10'
   - name: lin1
     flavor: standard.medium
     base_box:
@@ -48,7 +47,7 @@ hosts:
       mgmt_protocol: ssh
     hidden: false
     volumes:
-      - size: 10
+      - '10'
   - name: lin4
     flavor: standard.medium
     base_box:
@@ -57,27 +56,13 @@ hosts:
       mgmt_protocol: ssh
     hidden: false
 routers:
-  - name: r-access
+  - name: router
     flavor: standard.small
     base_box:
       image: debian-12-x86_64
       mgmt_user: debian
       mgmt_protocol: ssh
-    hidden: true
-  - name: r-cluster
-    flavor: standard.small
-    base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: true
-  - name: r-storage
-    flavor: standard.small
-    base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
-      mgmt_protocol: ssh
-    hidden: true
+    hidden: false
 networks:
   - name: access-switch
     cidr: 10.10.10.0/24
@@ -141,16 +126,16 @@ net_mappings:
     network: storage-switch
     ip: 10.10.30.3
   - host: lin4
-    network: access
-    ip: 10.10.10.9-switch
+    network: access-switch
+    ip: 10.10.10.9
 router_mappings:
-  - router: r-access
+  - router: router
     network: access-switch
     ip: 10.10.10.1
-  - router: r-cluster
+  - router: router
     network: cluster-switch
     ip: 10.10.20.1
-  - router: r-storage
+  - router: router
     network: storage-switch
     ip: 10.10.30.1
 groups:
@@ -186,40 +171,3 @@ groups:
       - lin2
       - lin3
       - lin4
-monitoring_targets:
-  - node: lin1
-    targets:
-      - port: 80
-        interface: access
-      - port: 9100
-        interface: access
-  - node: lin2
-    targets:
-      - port: 80
-        interface: access
-      - port: 9100
-        interface: access
-  - node: lin3
-    targets:
-      - port: 3260
-        interface: storage
-      - port: 9200
-        interface: access
-      - port: 5601
-        interface: access
-  - node: lin4
-    targets:
-      - port: 80
-        interface: access
-      - port: 9090
-        interface: access
-      - port: 3000
-        interface: access
-  - node: srv01
-    targets:
-      - port: 80
-        interface: access
-  - node: srv02
-    targets:
-      - port: 80
-        interface: access

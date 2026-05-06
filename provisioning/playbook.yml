@@ -4,6 +4,12 @@
   vars:
     ad_domain_name: globalfinancial.local
     ad_admin_password: ChangeMe!
+  roles:
+    - name: ansible-role-user-access-windows
+      user_access_username: LocalAdmin
+      user_access_password: Password123!
+      user_access_rdp: True
+      user_access_admin: True
   tasks:
     - name: Ensure AD DS Windows feature is installed
       register: ad_feature
@@ -35,6 +41,12 @@
     ad_domain_name: globalfinancial.local
     ad_admin_password: ChangeMe!
     ad_dc_ip: 10.10.10.3
+  roles:
+    - name: ansible-role-user-access-windows
+      user_access_username: LocalAdmin
+      user_access_password: Password123!
+      user_access_rdp: True
+      user_access_admin: True
   tasks:
     - name: Point DNS at the domain controller on all adapters
       ansible.windows.win_dns_client:
