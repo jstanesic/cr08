@@ -115,9 +115,9 @@
         iscsi_use_fileio: "{{ (iscsi_backing_disk.stdout | trim | length) == 0 }}"
     - name: Create block storage object on the additional disk
       when: not iscsi_use_fileio
-      failed_when: >-
-        iscsi_bs.rc != 0,'exists' not in (iscsi_bs.stderr | default('')) +
-        (iscsi_bs.stdout | default(''))
+      failed_when:
+        - iscsi_bs.rc != 0
+        - "'exists' not in (iscsi_bs.stderr | default('')) + (iscsi_bs.stdout | default(''))"
       changed_when: iscsi_bs.rc == 0
       notify: Save targetcli configuration
       register: iscsi_bs
@@ -127,9 +127,9 @@
     # Workaround until volumes are ready
     - name: Create file-backed iSCSI backstore when no extra disk is attached
       when: iscsi_use_fileio
-      failed_when: >-
-        iscsi_bs_file.rc != 0,'exists' not in (iscsi_bs_file.stderr | default('')) +
-        (iscsi_bs_file.stdout | default(''))
+      failed_when:
+        - iscsi_bs_file.rc != 0
+        - "'exists' not in (iscsi_bs_file.stderr | default('')) + (iscsi_bs_file.stdout | default(''))"
       changed_when: iscsi_bs_file.rc == 0
       notify: Save targetcli configuration
       register: iscsi_bs_file
@@ -137,17 +137,17 @@
         targetcli /backstores/fileio create name={{ iscsi_block_name }}
         file_or_dev=/var/lib/{{ iscsi_block_name }}.img size=10G
     - name: Create iSCSI target
-      failed_when: >-
-        iscsi_tgt.rc != 0,'exists' not in (iscsi_tgt.stderr | default('')) +
-        (iscsi_tgt.stdout | default(''))
+      failed_when:
+        - iscsi_tgt.rc != 0
+        - "'exists' not in (iscsi_tgt.stderr | default('')) + (iscsi_tgt.stdout | default(''))"
       changed_when: iscsi_tgt.rc == 0
       notify: Save targetcli configuration
       register: iscsi_tgt
       ansible.builtin.command: targetcli /iscsi create {{ iscsi_target_iqn }}
     - name: Map LUN 0 to the backstore
-      failed_when: >-
-        iscsi_lun.rc != 0,'exists' not in (iscsi_lun.stderr | default('')) +
-        (iscsi_lun.stdout | default(''))
+      failed_when:
+        - iscsi_lun.rc != 0
+        - "'exists' not in (iscsi_lun.stderr | default('')) + (iscsi_lun.stdout | default(''))"
       changed_when: iscsi_lun.rc == 0
       notify: Save targetcli configuration
       register: iscsi_lun
