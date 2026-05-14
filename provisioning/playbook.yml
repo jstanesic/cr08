@@ -12,7 +12,7 @@
   gather_facts: false
   vars:
     ad_domain_name: globalfinancial.local
-    ad_admin_password: ChangeMe!
+    ad_admin_password: Pa$$w0rd
   roles:
     - name: ansible-role-user-access-windows
       user_access_username: LocalAdmin
@@ -25,6 +25,12 @@
       ansible.windows.win_feature:
         name: AD-Domain-Services
         include_management_tools: true
+        state: present
+    - name: Set a strong password on the built-in Administrator account
+      ansible.windows.win_user:
+        name: Administrator
+        password: '{{ ad_admin_password }}'
+        password_never_expires: true
         state: present
     - name: Promote host to domain controller
       when: ad_feature is succeeded
@@ -48,7 +54,7 @@
   gather_facts: false
   vars:
     ad_domain_name: globalfinancial.local
-    ad_admin_password: ChangeMe!
+    ad_admin_password: Pa$$w0rd
     ad_dc_ip: 10.10.10.3
   roles:
     - name: ansible-role-user-access-windows
