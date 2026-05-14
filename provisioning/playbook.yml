@@ -26,7 +26,13 @@
         name: AD-Domain-Services
         include_management_tools: true
         state: present
+    - name: Detect whether host is already promoted to a domain controller
+      register: dc_role
+      changed_when: false
+      ansible.windows.win_shell: >-
+        (Get-CimInstance Win32_ComputerSystem).DomainRole
     - name: Set a strong password on the built-in Administrator account
+      when: (dc_role.stdout | trim | int) < 4
       ansible.windows.win_user:
         name: Administrator
         password: '{{ ad_admin_password }}'
