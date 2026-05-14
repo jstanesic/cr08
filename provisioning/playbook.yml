@@ -1,3 +1,12 @@
+- name: Wait until WinRM/PSRP is reachable on every Windows host
+  hosts: windows_hosts
+  gather_facts: false
+  tasks:
+    - name: Wait for PSRP listener to accept connections
+      ansible.builtin.wait_for_connection:
+        delay: 0
+        sleep: 10
+        timeout: 900
 - name: Active Directory — promote domain controller
   hosts: domain-controllers
   gather_facts: false
