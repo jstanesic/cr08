@@ -98,7 +98,6 @@
         enabled: true
         state: started
     - name: Detect the additional whole disk to use as the iSCSI backing device
-      failed_when: (iscsi_backing_disk.stdout | trim | length) == 0
       changed_when: 'false'
       register: iscsi_backing_disk
       ansible.builtin.shell:
@@ -110,7 +109,12 @@
             | awk -v root="/dev/$root_pk" '$2=="disk" && $1!=root {print $1}' \
             | head -n1
         executable: /bin/bash
+    # Workaround until volumes are ready
+    - name: Decide between whole-disk and file-backed backstore
+      ansible.builtin.set_fact:
+        iscsi_use_fileio: "{{ (iscsi_backing_disk.stdout | trim | length) == 0 }}"
     - name: Create block storage object on the additional disk
+      when: not iscsi_use_fileio
       failed_when: >-
         iscsi_bs.rc != 0,'exists' not in (iscsi_bs.stderr | default('')) +
         (iscsi_bs.stdout | default(''))
@@ -120,6 +124,18 @@
       ansible.builtin.command: >-
         targetcli /backstores/block create name={{ iscsi_block_name }} dev={{
         iscsi_backing_disk.stdout | trim }}
+    # Workaround until volumes are ready
+    - name: Create file-backed iSCSI backstore when no extra disk is attached
+      when: iscsi_use_fileio
+      failed_when: >-
+        iscsi_bs_file.rc != 0,'exists' not in (iscsi_bs_file.stderr | default('')) +
+        (iscsi_bs_file.stdout | default(''))
+      changed_when: iscsi_bs_file.rc == 0
+      notify: Save targetcli configuration
+      register: iscsi_bs_file
+      ansible.builtin.command: >-
+        targetcli /backstores/fileio create name={{ iscsi_block_name }}
+        file_or_dev=/var/lib/{{ iscsi_block_name }}.img size=10G
     - name: Create iSCSI target
       failed_when: >-
         iscsi_tgt.rc != 0,'exists' not in (iscsi_tgt.stderr | default('')) +
@@ -128,7 +144,7 @@
       notify: Save targetcli configuration
       register: iscsi_tgt
       ansible.builtin.command: targetcli /iscsi create {{ iscsi_target_iqn }}
-    - name: Map LUN 0 to the block storage object
+    - name: Map LUN 0 to the backstore
       failed_when: >-
         iscsi_lun.rc != 0,'exists' not in (iscsi_lun.stderr | default('')) +
         (iscsi_lun.stdout | default(''))
@@ -137,7 +153,7 @@
       register: iscsi_lun
       ansible.builtin.command: >-
         targetcli /iscsi/{{ iscsi_target_iqn }}/tpg1/luns create
-        /backstores/block/{{ iscsi_block_name }} 0
+        /backstores/{{ 'fileio' if iscsi_use_fileio else 'block' }}/{{ iscsi_block_name }} 0
     - name: Allow anonymous access on TPG 1
       changed_when: '''is now'' in (iscsi_tpg.stdout | default(''''))'
       notify: Save targetcli configuration
