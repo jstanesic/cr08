@@ -24,29 +24,32 @@ hosts:
   - name: lin1
     flavor: c2_r4_d40
     base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
+      image: xubuntu-noble-x86_64
+      mgmt_user: ubuntu
       mgmt_protocol: ssh
     hidden: false
   - name: lin2
     flavor: c2_r4_d40
     base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
+      image: xubuntu-noble-x86_64
+      mgmt_user: ubuntu
       mgmt_protocol: ssh
     hidden: false
   - name: lin3
     flavor: c2_r4_d40
     base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
+      image: xubuntu-noble-x86_64
+      mgmt_user: ubuntu
       mgmt_protocol: ssh
     hidden: false
+# Trying without volumes with file based scsi targets on the storage node.
+#    volumes:
+#    - size: 40
   - name: lin4
     flavor: c2_r4_d40
     base_box:
-      image: debian-12-x86_64
-      mgmt_user: debian
+      image: xubuntu-noble-x86_64
+      mgmt_user: ubuntu
       mgmt_protocol: ssh
     hidden: false
 routers:
@@ -150,7 +153,7 @@ groups:
   - name: monitoring
     nodes:
       - lin4
-  - name: monitor-os
+  - name: linux-nodes
     nodes:
       - lin1
       - lin2

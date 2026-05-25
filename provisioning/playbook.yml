@@ -81,12 +81,27 @@
         domain_admin_password: '{{ ad_admin_password }}'
         state: domain
         reboot: true
-- name: Shared storage — LIO iSCSI block target on the additional disk
+- name: Configure user on linux nodes
+  hosts: linux-nodes
+  become: true
+  roles:
+    - name: ansible-role-user-access
+      user_access_username: localuser
+      user_access_password: Password123!
+      user_access_sudo: True
+- name: Shared storage — file-backed iSCSI targets for the WSFC shared disks
   hosts: storage-nodes
   become: true
   vars:
-    iscsi_target_iqn: iqn.2026-04.local.globalfinancial:lun0
-    iscsi_block_name: lun0
+    iscsi_base_iqn: iqn.2026-04.local.globalfinancial
+    iscsi_image_dir: /var/lib/iscsi_disks
+    # Shared disks presented read-write to both WSFC nodes (srv01/srv02).
+    # quorum = cluster witness disk (small); data1 = clustered data volume.
+    iscsi_disks:
+      - name: quorum
+        size: 1G
+      - name: data1
+        size: 10G
   tasks:
     - name: Install targetcli
       ansible.builtin.package:
@@ -97,69 +112,59 @@
         name: rtslib-fb-targetctl
         enabled: true
         state: started
-    - name: Detect the additional whole disk to use as the iSCSI backing device
-      changed_when: 'false'
-      register: iscsi_backing_disk
-      ansible.builtin.shell:
-        cmd: |
-          set -euo pipefail
-          root_src=$(findmnt -no SOURCE /)
-          root_pk=$(lsblk -no PKNAME "$root_src")
-          lsblk -dnpro NAME,TYPE \
-            | awk -v root="/dev/$root_pk" '$2=="disk" && $1!=root {print $1}' \
-            | head -n1
-        executable: /bin/bash
-    # Workaround until volumes are ready
-    - name: Decide between whole-disk and file-backed backstore
-      ansible.builtin.set_fact:
-        iscsi_use_fileio: "{{ (iscsi_backing_disk.stdout | trim | length) == 0 }}"
-    - name: Create block storage object on the additional disk
-      when: not iscsi_use_fileio
+    - name: Ensure the backing-image directory exists
+      ansible.builtin.file:
+        path: '{{ iscsi_image_dir }}'
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+    - name: Create a file-backed backstore for each shared disk
+      loop: '{{ iscsi_disks }}'
+      loop_control:
+        label: '{{ item.name }}'
+      register: iscsi_bs
       failed_when:
         - iscsi_bs.rc != 0
         - "'exists' not in (iscsi_bs.stderr | default('')) + (iscsi_bs.stdout | default(''))"
       changed_when: iscsi_bs.rc == 0
       notify: Save targetcli configuration
-      register: iscsi_bs
       ansible.builtin.command: >-
-        targetcli /backstores/block create name={{ iscsi_block_name }} dev={{
-        iscsi_backing_disk.stdout | trim }}
-    # Workaround until volumes are ready
-    - name: Create file-backed iSCSI backstore when no extra disk is attached
-      when: iscsi_use_fileio
-      failed_when:
-        - iscsi_bs_file.rc != 0
-        - "'exists' not in (iscsi_bs_file.stderr | default('')) + (iscsi_bs_file.stdout | default(''))"
-      changed_when: iscsi_bs_file.rc == 0
-      notify: Save targetcli configuration
-      register: iscsi_bs_file
-      ansible.builtin.command: >-
-        targetcli /backstores/fileio create name={{ iscsi_block_name }}
-        file_or_dev=/var/lib/{{ iscsi_block_name }}.img size=10G
-    - name: Create iSCSI target
+        targetcli /backstores/fileio create name={{ item.name }}
+        file_or_dev={{ iscsi_image_dir }}/{{ item.name }}.img size={{ item.size }}
+    - name: Create an iSCSI target for each shared disk
+      loop: '{{ iscsi_disks }}'
+      loop_control:
+        label: '{{ item.name }}'
+      register: iscsi_tgt
       failed_when:
         - iscsi_tgt.rc != 0
         - "'exists' not in (iscsi_tgt.stderr | default('')) + (iscsi_tgt.stdout | default(''))"
       changed_when: iscsi_tgt.rc == 0
       notify: Save targetcli configuration
-      register: iscsi_tgt
-      ansible.builtin.command: targetcli /iscsi create {{ iscsi_target_iqn }}
-    - name: Map LUN 0 to the backstore
+      ansible.builtin.command: targetcli /iscsi create {{ iscsi_base_iqn }}:{{ item.name }}
+    - name: Map LUN 0 of each target to its backstore
+      loop: '{{ iscsi_disks }}'
+      loop_control:
+        label: '{{ item.name }}'
+      register: iscsi_lun
       failed_when:
         - iscsi_lun.rc != 0
         - "'exists' not in (iscsi_lun.stderr | default('')) + (iscsi_lun.stdout | default(''))"
       changed_when: iscsi_lun.rc == 0
       notify: Save targetcli configuration
-      register: iscsi_lun
       ansible.builtin.command: >-
-        targetcli /iscsi/{{ iscsi_target_iqn }}/tpg1/luns create
-        /backstores/{{ 'fileio' if iscsi_use_fileio else 'block' }}/{{ iscsi_block_name }} 0
-    - name: Allow anonymous access on TPG 1
-      changed_when: '''is now'' in (iscsi_tpg.stdout | default(''''))'
-      notify: Save targetcli configuration
+        targetcli /iscsi/{{ iscsi_base_iqn }}:{{ item.name }}/tpg1/luns create
+        /backstores/fileio/{{ item.name }} 0
+    - name: Allow both WSFC initiators to access TPG 1 of each target
+      loop: '{{ iscsi_disks }}'
+      loop_control:
+        label: '{{ item.name }}'
       register: iscsi_tpg
+      changed_when: "'is now' in (iscsi_tpg.stdout | default(''))"
+      notify: Save targetcli configuration
       ansible.builtin.command: >-
-        targetcli /iscsi/{{ iscsi_target_iqn }}/tpg1 set attribute
+        targetcli /iscsi/{{ iscsi_base_iqn }}:{{ item.name }}/tpg1 set attribute
         authentication=0 generate_node_acls=1 demo_mode_write_protect=0
   handlers:
     - name: Save targetcli configuration
