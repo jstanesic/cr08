@@ -150,21 +150,22 @@ groups:
   - name: storage-nodes
     nodes:
       - lin3
-  - name: monitoring
-    nodes:
-      - lin4
+# Monitoring disabled — prometheus role on the man node fails on empty monitoring_targets.icmp
+#  - name: monitoring
+#    nodes:
+#      - lin4
   - name: linux-nodes
     nodes:
       - lin1
       - lin2
       - lin3
       - lin4
-  - name: monitor-icmp
-    nodes:
-      - dc01
-      - srv01
-      - srv02
-      - lin1
-      - lin2
-      - lin3
-      - lin4
+#  - name: monitor-icmp
+#    nodes:
+#      - dc01
+#      - srv01
+#      - srv02
+#      - lin1
+#      - lin2
+#      - lin3
+#      - lin4
