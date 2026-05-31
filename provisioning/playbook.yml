@@ -101,6 +101,20 @@
       user_access_username: localuser
       user_access_password: Password123!
       user_access_sudo: True
+# Commented out for now — re-enable to suppress the colord polkit auth prompt at xubuntu desktop login.
+#  tasks:
+#    - name: Suppress polkit color-manager auth prompt on xubuntu desktop sessions
+#      ansible.builtin.copy:
+#        dest: /etc/polkit-1/rules.d/45-allow-colord.rules
+#        owner: root
+#        group: root
+#        mode: '0644'
+#        content: |
+#          polkit.addRule(function(action, subject) {
+#              if (action.id.indexOf("org.freedesktop.color-manager.") == 0) {
+#                  return polkit.Result.YES;
+#              }
+#          });
 - name: Shared storage — file-backed iSCSI targets for the WSFC shared disks
   hosts: storage-nodes
   become: true
