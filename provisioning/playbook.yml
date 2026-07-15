@@ -93,6 +93,40 @@
         domain_admin_password: '{{ ad_admin_password }}'
         state: domain
         reboot: true
+- name: Deploy lab verification scripts to Linux nodes
+  hosts: linux-nodes
+  become: true
+  tasks:
+    - name: Ensure /opt/scripts exists
+      ansible.builtin.file:
+        path: /opt/scripts
+        state: directory
+        mode: '0755'
+    - name: Deploy Verify-LabA1.sh to LIN1
+      when: inventory_hostname == 'lin1'
+      ansible.builtin.copy:
+        src: files/Verify-LabA1.sh
+        dest: /opt/scripts/Verify-LabA1.sh
+        mode: '0750'
+    - name: Deploy Verify-LabB1.sh to LIN4
+      when: inventory_hostname == 'lin4'
+      ansible.builtin.copy:
+        src: files/Verify-LabB1.sh
+        dest: /opt/scripts/Verify-LabB1.sh
+        mode: '0750'
+    - name: Deploy Verify-LabC1.sh to LIN4
+      when: inventory_hostname == 'lin4'
+      ansible.builtin.copy:
+        src: files/Verify-LabC1.sh
+        dest: /opt/scripts/Verify-LabC1.sh
+        mode: '0750'
+    - name: Deploy Verify-LabD1.sh to LIN4
+      when: inventory_hostname == 'lin4'
+      ansible.builtin.copy:
+        src: files/Verify-LabD1.sh
+        dest: /opt/scripts/Verify-LabD1.sh
+        mode: '0750'
+
 - name: Configure user on linux nodes
   hosts: linux-nodes
   become: true
