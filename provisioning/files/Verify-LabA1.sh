@@ -5,18 +5,20 @@ set -uo pipefail
 ok=true
 
 # 1 — Pacemaker HA_Service_Group must be Started
-if sudo pcs status 2>/dev/null | grep -q 'HA_Service_Group.*Started'; then
-    echo '[PASS] HA_Service_Group is Started in the Pacemaker cluster'
+if sudo pcs status 2>/dev/null | grep -iq 'SharedFS.*Started' && \
+   sudo pcs status 2>/dev/null | grep -iq 'VirtualIP.*Started' && \
+   sudo pcs status 2>/dev/null | grep -iq 'MySqlService.*Started'; then
+    echo '[PASS] HA_Service_Group resources (SharedFS, VirtualIP, MySqlService) are Started'
 else
-    echo '[FAIL] HA_Service_Group is not Started — check: sudo pcs status'
+    echo '[FAIL] One or more HA_Service_Group resources are not Started — check: sudo pcs status'
     ok=false
 fi
 
 # 2 — Windows Failover Cluster IP must respond
-if ping -c1 -W2 192.168.1.50 >/dev/null 2>&1; then
-    echo '[PASS] Windows Failover Cluster IP 192.168.1.50 is reachable'
+if ping -c1 -W2 10.10.10.50 >/dev/null 2>&1; then
+    echo '[PASS] Windows Failover Cluster IP 10.10.10.50 is reachable'
 else
-    echo '[FAIL] Windows Failover Cluster IP 192.168.1.50 is not reachable'
+    echo '[FAIL] Windows Failover Cluster IP 10.10.10.50 is not reachable'
     ok=false
 fi
 

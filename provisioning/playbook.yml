@@ -149,18 +149,40 @@
 #                  return polkit.Result.YES;
 #              }
 #          });
+- name: Populate /etc/hosts so lin1 and lin2 resolve each other on the cluster network
+  hosts: linux-ha
+  become: true
+  vars:
+    linux_ha_cluster_hosts:
+      - name: lin1
+        ip: 10.10.20.6
+      - name: lin2
+        ip: 10.10.20.7
+  tasks:
+    - name: Add cluster-network host records
+      loop: '{{ linux_ha_cluster_hosts }}'
+      loop_control:
+        label: '{{ item.name }}'
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^\S+\s+{{ item.name }}$'
+        line: '{{ item.ip }} {{ item.name }}'
 - name: Shared storage — file-backed iSCSI targets for the WSFC shared disks
   hosts: storage-nodes
   become: true
   vars:
     iscsi_base_iqn: iqn.2026-04.local.globalfinancial
     iscsi_image_dir: /var/lib/iscsi_disks
-    # Shared disks presented read-write to both WSFC nodes (srv01/srv02).
-    # quorum = cluster witness disk (small); data1 = clustered data volume.
+    # quorum/data1 are presented read-write to the WSFC nodes (srv01/srv02):
+    #   quorum = cluster witness disk (small); data1 = clustered data volume.
+    # data2 is presented read-write to the Linux Pacemaker nodes (lin1/lin2):
+    #   shared MySQL data volume, protected by fence_scsi (SCSI-3 PR) STONITH.
     iscsi_disks:
       - name: quorum
         size: 1G
       - name: data1
+        size: 10G
+      - name: data2
         size: 10G
   tasks:
     - name: Install targetcli
@@ -168,6 +190,13 @@
         name: targetcli-fb
         update_cache: yes
         state: present
+    - name: Ensure the SCSI-3 PR (APTPL) metadata directory exists
+      ansible.builtin.file:
+        path: /etc/rtslib-fb-target/pr
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
     - name: Ensure the LIO target service is enabled and running
       ansible.builtin.service:
         name: rtslib-fb-targetctl
