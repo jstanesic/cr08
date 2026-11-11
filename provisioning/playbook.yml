@@ -17,7 +17,7 @@
     - name: ansible-role-user-access-windows
       user_access_username: localadmin
       user_access_password: Password123!
-      user_access_rdp: True
+      user_access_rdp: False
       user_access_admin: True
   tasks:
     - name: Ensure AD DS Windows feature is installed
@@ -38,6 +38,25 @@
         password: '{{ ad_admin_password }}'
         password_never_expires: true
         state: present
+    - name: Enable RDP without NLA (applied by the reboot below, no TermService restart)
+      ansible.windows.win_regedit:
+        path: '{{ item.path }}'
+        name: '{{ item.name }}'
+        data: '{{ item.data }}'
+        type: dword
+      loop:
+        - { path: 'HKLM:\System\CurrentControlSet\Control\Terminal Server', name: 'fDenyTSConnections', data: 0 }
+        - { path: 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'UserAuthentication', data: 0 }
+        - { path: 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'SecurityLayer', data: 0 }
+    - name: Allow RDP through the firewall
+      win_firewall_rule:
+        name: Remote Desktop
+        localport: 3389
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        enabled: true
     - name: Promote host to domain controller
       when: ad_feature is succeeded
       microsoft.ad.domain:
@@ -85,7 +104,7 @@
     - name: ansible-role-user-access-windows
       user_access_username: localadmin
       user_access_password: Password123!
-      user_access_rdp: True
+      user_access_rdp: False
       user_access_admin: True
   tasks:
     - name: Point DNS at the domain controller on all adapters
@@ -93,6 +112,25 @@
         adapter_names: '*'
         dns_servers:
           - '{{ ad_dc_ip }}'
+    - name: Enable RDP without NLA (applied by the reboot below, no TermService restart)
+      ansible.windows.win_regedit:
+        path: '{{ item.path }}'
+        name: '{{ item.name }}'
+        data: '{{ item.data }}'
+        type: dword
+      loop:
+        - { path: 'HKLM:\System\CurrentControlSet\Control\Terminal Server', name: 'fDenyTSConnections', data: 0 }
+        - { path: 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'UserAuthentication', data: 0 }
+        - { path: 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'SecurityLayer', data: 0 }
+    - name: Allow RDP through the firewall
+      win_firewall_rule:
+        name: Remote Desktop
+        localport: 3389
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        enabled: true
     - name: Join host to the AD domain
       microsoft.ad.membership:
         dns_domain_name: '{{ ad_domain_name }}'
