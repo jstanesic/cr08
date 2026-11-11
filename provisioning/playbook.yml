@@ -50,6 +50,13 @@
         port: 389
         delay: 30
         timeout: 600
+    - name: Wait until Active Directory Web Services answers queries
+      ansible.windows.win_shell: Get-ADDomain | Out-Null
+      register: adws_ready
+      until: adws_ready is succeeded
+      retries: 30
+      delay: 20
+      changed_when: false
     - name: Ensure default OU for trainees exists
       microsoft.ad.ou:
         name: Trainees
